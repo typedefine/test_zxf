@@ -3,19 +3,22 @@ import 'package:testzxf/model/ZXFMessageModel.dart';
 
 class ListPageModel {
 
-  bool noMoreData = false;
+  String uId = "1";
+  bool isloadMore = false;
   bool isLoading = false;
-  int pageSize = 10;
-  int curPage = 0;
-  int nextPage = 0;
-  List<ZXFItems> _messgeList;
+  int pageSize = 8;
 
-  ZXFData model;
+  List<ZXFItems> messgeList;
+
+//  ZXFData model;
 
   bool get isEmpty => cellCount == 0;
-  int get cellCount => model == null ? 0 : model.count;
-  List<ZXFItems> get messgeList => model == null ? 0 : model.items;
-  set messgeList(List<ZXFItems> ml) => _messgeList = ml;
+  int get cellCount => messgeList == null ? 0 : messgeList.length;
+////  List<ZXFItems> get messgeList => model == null ? null : model.items;
+//  set messgeList(List<ZXFItems> ml){
+//    _messgeList = ml;
+////    model.count = ml.length;
+//  }
 
 }
 

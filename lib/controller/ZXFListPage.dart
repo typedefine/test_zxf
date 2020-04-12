@@ -37,8 +37,6 @@ class ZXFListPageState extends ZXFState<ZXFListPage> with WidgetsBindingObserver
     });
 
 //    _refreshData();
-    _viewModel.curPage = Config.FIRSTPAGE_INDEX;
-    _viewModel.nextPage = Config.FIRSTPAGE_INDEX + 1;
     _getData(0, 1);
   }
 
@@ -63,7 +61,7 @@ class ZXFListPageState extends ZXFState<ZXFListPage> with WidgetsBindingObserver
               })
         ],
       ),
-      body: _viewModel.isEmpty
+      body: _viewModel.isLoading
         ?
     new Center(
       child: new CircularProgressIndicator(
@@ -82,6 +80,7 @@ class ZXFListPageState extends ZXFState<ZXFListPage> with WidgetsBindingObserver
             physics: const AlwaysScrollableScrollPhysics(),
             padding: EdgeInsets.only(top: 2,bottom: 2),
             itemBuilder: (context, index){
+              if(index >= _viewModel.messgeList.length) return null;
               ZXFItems obj = _viewModel.messgeList[index];
               return new GestureDetector(
                 onTap: (){
@@ -126,39 +125,44 @@ class ZXFListPageState extends ZXFState<ZXFListPage> with WidgetsBindingObserver
 
   void _getData(int lastItemCreateTime, int direction) {
 
-    if(_viewModel.isLoading || _viewModel.nextPage <= _viewModel.curPage || _viewModel.noMoreData) return;
-    debugPrint("page ${_viewModel.curPage}");
+    if(_viewModel.isLoading) return;//|| _viewModel.noMoreData
     _viewModel.isLoading = true;
 
-    API.getListData("1" , _viewModel.pageSize, lastItemCreateTime, direction).then((data) {
+    API.getListData(_viewModel.uId , _viewModel.pageSize, lastItemCreateTime, direction).then((data) {
       ZXFMessageModel model = new ZXFMessageModel.fromJson(data);
-      _viewModel.model = model.data;
-      print('data***********************>>:$data');
-      List objectList = model.data.items;
+//      _viewModel.model = model.data;
+      print('data*******************>>:$data');
+      List<ZXFItems> objectList = model.data.items;
       debugPrint('------------------${objectList.length}---');
-      if(model.data.count < _viewModel.pageSize) {
-        _viewModel.noMoreData = true;
-      }
-      _viewModel.pageSize = objectList.length;
+//      if(model.data.count < _viewModel.pageSize) {
+//        _viewModel.noMoreData = true;
+//      }
       if(objectList.length > 0) {
+        if(!_viewModel.isloadMore){
+          _viewModel.messgeList = [];
+        }
         var dataList = new List<ZXFItems>();
-        if(_viewModel.curPage != Config.FIRSTPAGE_INDEX) {
+        if(_viewModel.cellCount > 0){
           dataList.addAll(_viewModel.messgeList);
         }
-        _viewModel.curPage = _viewModel.nextPage;
-
+        dataList.addAll(objectList);
+//        _viewModel.model = model.data;
+        debugPrint("原共有${_viewModel.cellCount}， 新数据有${objectList.length}");
         setState(() {
           _viewModel.isLoading = false;
           _viewModel.messgeList = dataList;
-          print('刷新UI显示');
+//          debugPrint("1共有${_viewModel.messgeList.length}");
+          print('刷新UI显示0');
         });
       }else{
-        _viewModel.nextPage = _viewModel.curPage;
+//        setState(() {
+          _viewModel.isLoading = false;
+//          print('刷新UI显示1');
+//        });
       }
     }).catchError((e){
       print('list page Error:--->$e');
       _viewModel.isLoading = false;
-      _viewModel.nextPage = _viewModel.curPage;
     });
 
   }
@@ -167,23 +171,22 @@ class ZXFListPageState extends ZXFState<ZXFListPage> with WidgetsBindingObserver
   void _createData(){
     String tmp =  Random().nextInt(100).toString();
     debugPrint("Random $tmp");
-    API.postData(tmp, "第$tmp条信息").then((data){
+    API.postData(_viewModel.uId, "第$tmp条信息").then((data){
       debugPrint("create api $data");
+//      _refreshData();
     });
   }
 
   Future<void> _refreshData() async {
     debugPrint("------》》》》》》》头刷新");
-    _viewModel.noMoreData = false;
+    _viewModel.isloadMore = false;
     _viewModel.isLoading = false;
-    _viewModel.curPage = Config.FIRSTPAGE_INDEX;
-    _viewModel.nextPage = Config.FIRSTPAGE_INDEX + 1;
-    _getData(_viewModel.messgeList.last.creationTime, 1);
+    _getData(_viewModel.messgeList.first.creationTime, 1);
   }
 
   Future<void> _loadMoreData() async {
     debugPrint("加载更多");
-    _viewModel.nextPage++;
+    _viewModel.isloadMore = true;
     _getData(_viewModel.messgeList.last.creationTime,0);
   }
 
